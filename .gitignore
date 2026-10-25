@@ -1,0 +1,35 @@
+# Secrets, local runtime and conversation artifacts.
+.env
+.env.*
+*.env
+.streamlit/secrets.toml
+*cookies*
+*.har
+*.key
+*.pem
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.verification/
+.idea/
+.claude/
+logs/
+chroma_db/
+md5.text
+*.sqlite*
+*.db
+*.onnx
+*.safetensors
+*.bin
+
+# Keep only deliberately authored, public demonstration data.
+/data/*
+!/data/knowledge/
+!/data/external/
+/data/knowledge/*
+!/data/knowledge/demo_faq.txt
+!/data/knowledge/demo_maintenance.txt
+/data/external/*
+!/data/external/records.example.csv

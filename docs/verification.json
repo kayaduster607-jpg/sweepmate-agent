@@ -1,0 +1,21 @@
+{
+  "tests": 19,
+  "failures": 0,
+  "errors": 0,
+  "successful": true,
+  "model_api_calls": 0,
+  "env_files_read": 0,
+  "original_data_read": false,
+  "real_chroma_test": true,
+  "streamlit_app_test": true,
+  "versions": {
+    "langchain-core": "1.7.0",
+    "langgraph": "1.2.17",
+    "langchain-openai": "1.7.2",
+    "langchain-chroma": "1.1.0",
+    "chromadb": "1.5.9",
+    "streamlit": "1.66.1",
+    "pypdf": "6.21.2"
+  },
+  "offline_demo": "passed"
+}

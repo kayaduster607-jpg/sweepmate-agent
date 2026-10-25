@@ -1,0 +1,6 @@
+base_url: "https://api.siliconflow.cn/v1"
+chat_model_name: "Qwen/Qwen2.5-72B-Instruct"
+#embedding_model_name: "BAAI/bge-m3"
+embedding_model_name: "Qwen/Qwen3-Embedding-8B"
+
+# Vector storage settings are defined only in config/chroma.yml.

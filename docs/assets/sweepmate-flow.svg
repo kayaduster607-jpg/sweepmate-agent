@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1040" viewBox="0 0 1600 1040">
+<rect width="1600" height="1040" fill="#F6F7FA"/>
+<text x="72" y="45" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="19" fill="#245FE8">SWEEPMATE / AGENT + KNOWLEDGE</text>
+<text x="70" y="91" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="54" fill="#142237">SweepMate Agent</text>
+<text x="73" y="175" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="27" fill="#526277">知识检索、工具调用与使用报告，共用一个可追踪的客服流程。</text>
+<text x="72" y="240" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="18" fill="#526277">01  CONVERSATION</text>
+<text x="526" y="240" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="18" fill="#526277">02  LANGGRAPH</text>
+<text x="1194" y="240" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="18" fill="#526277">03  MODEL PROVIDER</text>
+<rect x="70" y="280" width="330" height="270" rx="20" fill="#FFFFFF" stroke="#DCE2EC" stroke-width="2"/>
+<text x="100" y="312" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="27" fill="#142237">Streamlit 对话界面</text>
+<text x="100" y="373" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="23" fill="#526277">用户提问 / 历史消息</text>
+<text x="100" y="423" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="23" fill="#526277">行动与工具状态</text>
+<text x="100" y="473" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="23" fill="#526277">最终回答 / 演示报告</text>
+<rect x="520" y="280" width="550" height="270" rx="20" fill="#142237"/>
+<text x="550" y="311" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="29" fill="#FFFFFF">ReAct 状态图</text>
+<text x="550" y="372" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="24" fill="#D5E4F9">agent : 模型决定回答或调用工具</text>
+<text x="550" y="422" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="24" fill="#D5E4F9">tools : 执行后返回 agent</text>
+<text x="550" y="478" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="23" fill="#92B7FF">消息追加 / 模式标记 / 内存检查点</text>
+<rect x="1190" y="280" width="340" height="270" rx="20" fill="#FFFFFF" stroke="#DCE2EC" stroke-width="2"/>
+<text x="1220" y="312" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="28" fill="#142237">SiliconFlow</text>
+<text x="1220" y="372" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="23" fill="#526277">OpenAI 兼容接口</text>
+<text x="1220" y="422" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="23" fill="#526277">Chat / Embeddings</text>
+<text x="1220" y="473" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="23" fill="#526277">进程环境提供凭据</text>
+<polyline points="400,414 520,414" fill="none" stroke="#245FE8" stroke-width="3"/>
+<polygon points="520,414 509,408 509,420" fill="#245FE8"/>
+<polyline points="1070,414 1190,414" fill="none" stroke="#245FE8" stroke-width="3"/>
+<polygon points="1190,414 1179,408 1179,420" fill="#245FE8"/>
+<polyline points="650,550 650,604 420,604 420,660" fill="none" stroke="#245FE8" stroke-width="3"/>
+<polyline points="950,550 950,604 1190,604 1190,660" fill="none" stroke="#245FE8" stroke-width="3"/>
+<rect x="70" y="660" width="700" height="240" rx="18" fill="#EAF0FC"/>
+<text x="102" y="687" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="28" fill="#245FE8">RAG / 知识工具</text>
+<text x="102" y="745" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="23" fill="#142237">TXT / PDF  -&gt;  分片  -&gt;  Embedding  -&gt;  Chroma</text>
+<text x="102" y="795" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="23" fill="#142237">Top-3 检索  -&gt;  基于资料总结  -&gt;  工具结果</text>
+<text x="102" y="848" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="21" fill="#526277">FAQ保留来源信息；本地索引独立构建。</text>
+<rect x="850" y="660" width="680" height="240" rx="18" fill="#FFFFFF" stroke="#DCE2EC" stroke-width="2"/>
+<text x="882" y="687" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="28" fill="#245FE8">REPORT / 模式与记录</text>
+<text x="882" y="745" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="23" fill="#142237">报告工具  -&gt;  is_report_mode  -&gt;  切换提示词</text>
+<text x="882" y="795" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="23" fill="#142237">示例CSV  -&gt;  查询记录  -&gt;  生成中文报告</text>
+<text x="882" y="848" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="21" fill="#526277">120条合成记录；天气、身份、位置为模拟。</text>
+<text x="72" y="964" dominant-baseline="text-before-edge" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="24" fill="#526277">本机学习演示 / 不附带原知识库、历史对话、数据库或模型密钥</text>
+</svg>
