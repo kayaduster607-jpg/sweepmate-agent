@@ -1,137 +1,75 @@
-# SweepMate Agent
+# SweepMate Agent · 扫地机器人问答与使用报告
 
-**面向扫地机器人咨询的 RAG 智能客服：检索知识、调用工具、生成演示使用报告。**
+一个围绕扫地机器人场景的 LangGraph Agent：回答已入库知识中的问题，也能切换报告模式，查询用户清扫记录并整理为中文使用报告。
 
-Python 3.11+ / LangGraph / LangChain / Chroma / Streamlit / SiliconFlow
+仓库提供两条路径：**离线固定演示**检查图、工具和数据链路，无需 Key；**Streamlit 在线模式**使用实际聊天与嵌入服务，支持自然语言问答。知识和清扫记录均带合成示例，便于区分演示数据与真实设备数据。
 
-[快速开始](#3-快速开始) | [智能体流程](#4-react-智能体怎样工作) | [RAG实现](#5-知识库如何构建与检索) | [七个工具](#6-工具能力与演示边界) | [报告流程](#7-报告模式如何切换) | [配置](#9-配置与数据位置) | [验证](#11-验证与复现)
+[离线跑一次](#先运行无需密钥的固定演示) · [在线问答](#启用在线问答) · [输出与数据](#输出与数据位置) · [Agent 原理](#react-智能体怎样工作)
 
-SweepMate Agent 把知识问答和工具调用放进同一个对话流程：模型先决定直接回答还是调用工具；工具返回资料或记录后，模型继续生成答案。知识问答通过Chroma检索TXT/PDF资料，报告场景则通过状态标记切换提示词，结合CSV记录生成中文Markdown报告。
+## 先运行无需密钥的固定演示
 
-这是一个**可以阅读、运行和验证的学习项目**。公开仓库附带两份新编写的示例知识文本与120条合成记录；天气、位置、用户ID和月份工具为固定或随机的演示实现，不连接真实设备或业务系统。原有知识库、用户数据、向量数据库和日志没有作为发布内容。
-
-## 先用一次：问题或用户记录，怎样变成回答与报告
-
-| 场景 | 你要输入 | 预期输出 |
-| --- | --- | --- |
-| 固定离线演示 | 运行脚本，无需自己输入Key | 终端中的工具执行事件和用户1001、2025-01的合成报告 |
-| 知识问答 | 网页里输入关于已入库资料的问题 | 基于检索资料的中文回答及执行状态 |
-| 使用报告 | 指定用户ID与月份，例如1001、2025-01 | 页面上的中文Markdown报告，包含特征、效率、耗材、对比 |
-
-### 第一遍先离线跑通
-
-按[快速开始](#3-快速开始)安装requirements后执行：
-
-```powershell
-.\.venv\Scripts\python.exe -X utf8 tools/offline_demo.py
-```
-
-终端应依次出现报告切换工具、记录查询工具和最终 `answer`。最终报告中的记录均带“合成演示”。**它打印文本，不自动保存DOCX/PDF，也不接受任意问题；响应步骤是预先安排的。**
-
-### 换成网页里的真实模型问答
-
-1. 在当前终端配置OPENAI_API_KEY，并在 `config/rag.yml` 确认实际服务地址、聊天模型与嵌入模型。默认是SiliconFlow兼容接口，不是随便拿一种服务的Key都能用。
-2. 运行 `tools/ingest.py`，确认示例知识已入库；它会调用嵌入服务。只启动网页而没入库，不能假定知识问答已有材料。
-3. 运行Streamlit后访问 `http://127.0.0.1:8501`。输入“根据示例知识库，漏扫应先检查哪些信息？”，查看执行区和外部回答区。
-4. 再输入“为用户1001生成2025-01的合成演示报告”，检查工具查询的ID和月份，以及报告中的合成标签。
-
-**结果保存位置：**回答与报告显示在页面，会话仅保存在本次内存状态；服务重启后不保留历史。向量索引保存在本机 `chroma_db/`。当前没有报告文件下载按钮，复制Markdown可以自行保存。天气、身份、城市和默认月份工具是模拟实现，不代表连接了真实设备。
-
-## 1. 项目解决什么问题
-
-单纯让模型回答产品问题，容易把常识当成具体产品依据；固定问答又难覆盖“查资料、查记录、写报告”等不同流程。本项目将两部分结合：**用RAG补充可检索资料，用显式状态图组织工具与回答的往返。**
-
-| 需求 | 当前实现 | 代码入口 |
-| --- | --- | --- |
-| 根据资料回答使用问题 | 检索Top-3片段，再经独立模型链总结 | `rag/rag_service.py` |
-| 一次回答可能需要多个操作 | agent与tools节点循环，模型自主选择工具 | `agent/react_agent.py` |
-| 普通知识和报告写作使用不同指令 | 成功执行报告工具后更新模式标记 | `is_report_mode` |
-| 区分行动说明、工具状态和最终回答 | 图节点更新转换为四类前端事件 | `execute_stream()` |
-| 维护FAQ与一般说明资料 | 结构检测后选择问答切分或递归切分 | `rag/vector_store.py` |
-| 避免每次重复入库 | 文件MD5记录配合本地向量索引 | `load_document()` |
-| 不带真实数据也能检查流程 | 合成知识、合成CSV、脚本模型与离线回归 | `data/`、`tests/`、`tools/` |
-
-## 2. 架构与模块分工
-
-![SweepMate Agent架构与数据流](docs/assets/sweepmate-flow.png)
-
-[可编辑SVG](docs/assets/sweepmate-flow.svg)与[绘图脚本](tools/generate_architecture.py)一并保留。图片存放在仓库内，README不依赖远程图床或特殊公式渲染。
-
-| 层 | 技术或模块 | 责任 |
-| --- | --- | --- |
-| 对话界面 | Streamlit | 输入问题、显示历史、展示执行状态和最终回答 |
-| 流程编排 | LangGraph StateGraph | 消息追加、条件路由、工具执行、报告标记与内存检查点 |
-| 模型适配 | ChatOpenAI / OpenAIEmbeddings | 通过OpenAI兼容接口调用聊天与嵌入模型 |
-| 知识服务 | LangChain + Chroma | 文档加载、分片、入库、相似度检索与资料总结 |
-| 业务工具 | LangChain tool | 演示天气/身份、CSV记录查询、报告模式入口 |
-| 配置与提示词 | YAML + TXT | 分离模型、检索参数、数据路径和三类提示词 |
-
-默认模型接口配置为SiliconFlow。OpenAI在这里指客户端协议与适配类，**不表示请求发往OpenAI服务**；实际请求地址由 `config/rag.yml` 的base_url决定。[SiliconFlow兼容接口说明](https://docs.siliconflow.cn/docs/userguide/quickstart)
-
-## 3. 快速开始
-
-### 3.1 安装依赖
-
-使用Python 3.11或更新版本。本次在Windows、Python 3.13.5的全新虚拟环境验证；没有宣称所有Python小版本与操作系统都已测试。
-
-PowerShell中执行：
+准备 Python 3.11+，Windows PowerShell：
 
 ```powershell
 git clone https://github.com/kayaduster607-jpg/sweepmate-agent.git
 cd sweepmate-agent
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-```
-
-### 3.2 先运行无需密钥的固定流程演示
-
-```powershell
 .\.venv\Scripts\python.exe -X utf8 tools/offline_demo.py
 ```
 
-这会运行真实LangGraph与记录查询工具：切换报告模式，读取合成用户1001在2025-01的记录，再输出演示报告。模型响应由脚本预先安排，**不理解任意问题、不调用模型API，也不是联网RAG演示**。它用来检查项目的数据和工具调用链是否能运行。
+不需要输入问题。脚本预先安排“切换报告模式 → 查询用户 1001、月份 2025-01 → 输出报告”的步骤，运行真实图与工具，模型响应由演示适配器提供。
 
-离线回归也不需要真实密钥：
+完成时终端会出现工具事件及以“合成演示报告”为标题的最终文本。**它不会生成文件，也不能用来测试任意问题的模型理解能力。**
 
-```powershell
-.\.venv\Scripts\python.exe -X utf8 tools/verify.py
-```
+## 启用在线问答
 
-### 3.3 配置在线模型凭据
+### 配置服务与模型
 
-在线问答和知识入库需要可用的模型服务凭据。当前客户端使用进程环境变量 `OPENAI_API_KEY`；若base_url是SiliconFlow，这个变量应提供对应服务的Key，变量名称不会决定服务商。
+检查 [config/rag.yml](config/rag.yml) 的 base_url、聊天模型和嵌入模型，必须与自己账号的服务一致。当前默认采用 SiliconFlow 兼容接口，变量叫 OPENAI_API_KEY 并不意味着任意 OpenAI Key 都适用。
 
-可以在当前PowerShell进程中隐藏输入，不把凭据写入项目文件：
+在同一 PowerShell 终端中隐藏输入对应服务的 Key：
 
 ```powershell
-$secureKey = Read-Host "Enter the provider API key" -AsSecureString
-$env:OPENAI_API_KEY = [System.Net.NetworkCredential]::new("", $secureKey).Password
+$providerKey = Read-Host "Provider API key" -AsSecureString
+$env:OPENAI_API_KEY = [System.Net.NetworkCredential]::new("", $providerKey).Password
 ```
 
-项目不要求创建或加载环境文件。不要把真实Key写入YAML、代码、README、命令样例或提交记录。离线演示使用的 `example` 是无效占位值，不能用于联网调用。
-
-### 3.4 先入库，再启动网页
-
-在同一个已配置凭据的终端中执行：
+### 入库，然后启动网页
 
 ```powershell
 .\.venv\Scripts\python.exe -X utf8 tools/ingest.py
 .\.venv\Scripts\python.exe -X utf8 -m streamlit run app.py
 ```
 
-打开 [http://127.0.0.1:8501](http://127.0.0.1:8501)。入库程序输出本次新增、跳过、失败文件和分片数量；有文件入库失败时退出码为1。网页不会自动替你完成首次知识入库。
+先确认入库摘要中的新增、跳过、失败文件和分片数量；失败退出码为 1。入库调用嵌入服务，在线回答可能同时调用聊天与嵌入服务。默认模型名只是配置值，运行前确认服务端可用性与额度。
 
-入库会调用嵌入模型，在线问答可能同时调用聊天和嵌入模型，按所选服务规则计费。当前默认模型名沿用原始配置：聊天 `Qwen/Qwen2.5-72B-Instruct`，嵌入 `Qwen/Qwen3-Embedding-8B`；本次没有使用真实Key确认这两个模型在你的账号中仍可用，运行前需核对服务端模型列表、工具调用支持与额度。
+### 完成两种任务
 
-可以尝试的问题：
+打开 [http://127.0.0.1:8501](http://127.0.0.1:8501)：
 
-- 根据示例知识库，漏扫场景应先检查哪些信息？
-- 解释示例耗材状态字段代表什么。
-- 为用户1001生成2025-01的合成演示报告。
+| 在输入框发送 | 观察什么 | 得到什么 |
+| --- | --- | --- |
+| “根据示例知识库，漏扫场景应先检查哪些信息？” | 检索工具与页面执行状态 | 基于已入库资料的中文回答 |
+| “为用户1001生成2025-01的合成演示报告。” | 报告模式切换、记录查询的 ID 与月份 | 包含合成标签的使用报告 |
 
-## 4. ReAct 智能体怎样工作
+工具执行区用于查看调用过程，外部回答区展示最终结果。未入库时只启动网页，不能视为知识问答准备完成；查不到指定月份的记录，也不应由模型编造统计。
 
-### 4.1 一个可见的状态循环
+## 输出与数据位置
+
+| 内容 | 保存位置 | 是否自动生成下载文件 |
+| --- | --- | --- |
+| 离线演示 | 终端输出 | 否 |
+| 网页回答与 Markdown 报告 | 当前会话内存 | 否，可手动复制保存 |
+| 向量索引与去重状态 | `chroma_db/`、`md5.text` | 本机运行数据 |
+| 示例知识与 120 条合成记录 | `data/knowledge/`、`data/external/records.example.csv` | 已随仓库提供 |
+
+当前没有 Word / PDF 报告下载按钮，应用重启后不保留会话历史。天气、身份、城市和默认月份是模拟工具，不代表连接真实设备或实时服务。
+
+
+## ReAct 智能体怎样工作
+
+### 一个可见的状态循环
 
 ```text
 START
@@ -152,7 +90,7 @@ START
 
 `_execute_tools()`通过ToolNode执行。工具结果作为ToolMessage进入历史，模型能在下一轮看到结果；发生节点级异常时，代码为待完成的调用补上带相同ID的错误ToolMessage，避免仅返回空消息后留下未回答的工具请求。
 
-### 4.2 事件类型与界面显示
+### 事件类型与界面显示
 
 ```json
 {"type":"thought","content":"Checking the demonstration records."}
@@ -167,7 +105,7 @@ START
 
 这里的thought是保留的事件名称，表示**模型公开输出的简短行动说明**，不是读取模型内部推理。提示词要求只给行动说明与回答。当前使用 `stream_mode="updates"` 接收节点完成后的更新，模型节点调用的是invoke，因此不把它描述为逐token流式输出。[LangGraph流模式说明](https://docs.langchain.com/oss/python/langgraph/streaming)
 
-### 4.3 会话与循环边界
+### 会话与循环边界
 
 每个ReactAgent实例有自己的MemorySaver。默认thread_id为 `default_thread`，程序调用者可以显式提供不同thread_id；回归已验证不同线程历史分离。Streamlit将Agent保存在各自的session_state中，但这不等同于已经实现账号认证和持久化用户隔离。
 
@@ -179,9 +117,10 @@ for event in events:
 
 一次调用从普通模式开始；同一线程的消息仍会保留。检查点只在内存，服务重启后消失。显式图递归上限为25步，它限制图执行步骤，不能当成25次工具调用或固定模型费用上限。[LangGraph检查点说明](https://docs.langchain.com/oss/python/langgraph/persistence)
 
-## 5. 知识库如何构建与检索
 
-### 5.1 入库路径
+## 知识库如何构建与检索
+
+### 入库路径
 
 ```text
 data/knowledge/*.txt or *.pdf
@@ -208,7 +147,7 @@ FAQ检测要求同一文本中至少出现5处“行首数字、点、空格”�
 
 FAQ按问答结构切分，不额外保证每段小于300字符。配置里的separators默认按普通分隔符处理；其中类似正则的字符串也不会自动成为正则规则，FAQ识别才使用单独的正则表达式。
 
-### 5.2 查询路径
+### 查询路径
 
 `rag_summarize(query)`先调用retriever取片段，按参考资料编号组合正文和元数据，再把query与context放进RAG提示词，经模型总结后返回字符串。外层Agent读到这个工具结果后，继续组织最终答案。
 
@@ -225,13 +164,14 @@ User question
 
 嵌入适配设置 `check_embedding_ctx_length=False`，向兼容服务发送文本，避免套用OpenAI专用token编号预处理；这不意味着取消了服务商自己的长度限制。没有实现重排模型、混合检索、相关性阈值或强制逐条引用；提示词中的“只依据资料”也不等于已经证明不会产生幻觉。
 
-### 5.3 去重能做什么，不能做什么
+### 去重能做什么，不能做什么
 
 文件向量成功写入后才记录MD5，因此正常重复入库会跳过已处理文件。但Chroma与文本哈希记录不是同一事务：进程崩溃可能留下部分写入。更改文件后会新增分片，当前没有删除旧版本分片；删除文件也不会自动删除旧向量。
 
 如果更换嵌入模型、集合或分片规则，应重建对应索引，并使用匹配的去重记录。只删除数据库而保留旧 `md5.text` 会让程序误以为文件已经入库；只删除哈希记录可能重复加入旧内容。重建前应备份自己需要保留的数据，不要把这两个文件当成互不相关的缓存。
 
-## 6. 工具能力与演示边界
+
+## 工具能力与演示边界
 
 | 工具 | 当前输入与输出 | 实现状态 |
 | --- | --- | --- |
@@ -245,7 +185,8 @@ User question
 
 这些工具没有设备远程控制能力。报告工具也不会自动给其他工具注入隐藏参数；“获取ID、月份、查记录”等步骤依赖模型遵守提示词，不是一个已经强制验证所有业务顺序的工作流。
 
-## 7. 报告模式如何切换
+
+## 报告模式如何切换
 
 ```text
 Report request
@@ -270,7 +211,8 @@ user_id,feature,efficiency,consumables,comparison,month
 
 发布示例覆盖10个合成ID与2025年的12个月，共120条记录，确保演示工具的随机组合能查到示例。数据只包含特征、效率、耗材和对比字符串，没有真实清扫轨迹、传感器数据或身份信息。
 
-## 8. 提示词怎样组织
+
+## 提示词怎样组织
 
 | 模板 | 用途 | 输入 |
 | --- | --- | --- |
@@ -280,7 +222,8 @@ user_id,feature,efficiency,consumables,comparison,month
 
 客服和报告模板在相应模型节点加载，RAG模板在RAG服务构造时加载；修改RAG模板后应重启服务。公开版本明确区分合成与真实信息，保留“资料不足时说明”的要求。它没有将提示词当成身份认证或数据访问控制。
 
-## 9. 配置与数据位置
+
+## 配置与数据位置
 
 | 文件或位置 | 内容 | 是否进入仓库 |
 | --- | --- | --- |
@@ -296,7 +239,8 @@ user_id,feature,efficiency,consumables,comparison,month
 
 配置在模块导入时读取，修改模型或路径后应重启应用。默认日志不再打印完整RAG提示词，但异常日志仍可能包含上下文或路径，公开故障材料前需要脱敏。
 
-## 10. 常见问题
+
+## 常见问题
 
 | 表现 | 优先检查 |
 | --- | --- |
@@ -313,36 +257,12 @@ user_id,feature,efficiency,consumables,comparison,month
 
 当前按可信本机学习环境运行，没有账号鉴权、知识访问权限、配额、限流或生产审计系统。共享部署前需要单独设计这些能力，并评估检索内容发送给模型服务的范围。
 
-## 11. 验证与复现
 
-日期：2026-10-25。全新安装requirements后，依赖一致性检查通过，19项回归全部通过：
 
-| 范围 | 已验证内容 |
-| --- | --- |
-| 真实LangGraph | 直接回答、工具循环、成功/失败报告切换、线程历史分离、模型异常事件 |
-| 真实Chroma | 使用假嵌入入库、MD5跳过、Top-3检索和来源元数据 |
-| RAG组合 | 提问、片段与元数据进入总结提示词 |
-| CSV工具 | 120条记录覆盖、引号逗号、字段缺失、空查询与JSON文本 |
-| Streamlit AppTest | 对话输入、最终答案写入历史、错误显示且不伪造答案 |
+## 验证与源码入口
 
-验证入口在导入应用前拒绝环境文件访问和Python外网连接，模型使用脚本替身，嵌入使用确定性假向量。没有调用真实聊天或嵌入API，没有使用原知识库、业务数据或既有向量数据库。
+```powershell
+.\.venv\Scripts\python.exe -X utf8 tools/verify.py
+```
 
-这些检查证明本地组件与状态流程能连接起来，**不等于回答准确率评测、真实模型联调或完整依赖漏洞审计**。没有编造命中率、延迟提升或成本下降。详细环境、改动与边界见[验证记录](docs/verification.md)和[机器可读结果](docs/verification.json)。
-
-## 12. 代码导航与后续维护
-
-| 路径 | 主要职责 |
-| --- | --- |
-| [app.py](app.py) | Streamlit页面和前端事件展示 |
-| [agent/react_agent.py](agent/react_agent.py) | 状态图、工具分支、模式切换与事件转换 |
-| [agent/tools/agent_tools.py](agent/tools/agent_tools.py) | 七个工具、CSV解析和记录缓存 |
-| [rag/vector_store.py](rag/vector_store.py) | 入库、FAQ检测、递归分片、MD5与检索器 |
-| [rag/rag_service.py](rag/rag_service.py) | 参考资料拼接和总结链 |
-| [model/factory.py](model/factory.py) | 聊天及嵌入模型客户端 |
-| [utils/config_handler.py](utils/config_handler.py) | YAML配置加载 |
-| [tools/ingest.py](tools/ingest.py) | 知识入库入口与结果统计 |
-| [tools/offline_demo.py](tools/offline_demo.py) | 无密钥的固定报告流程演示 |
-| [tools/verify.py](tools/verify.py) | 离线验证和环境文件访问保护 |
-| [NOTICE.md](NOTICE.md) | 来源与第三方依赖说明 |
-
-适合下一步补充的内容包括真实业务适配器、可评测的问答集、证据引用、旧分片更新与删除、持久化会话、工具调用预算和用户隔离。接入真实数据前，应先替换模拟身份工具并建立访问控制，而不只是更换一份CSV。
+离线检查用于验证确定性图与工具流程，不证明真实服务模型可用。图入口在 `agent/react_agent.py`，演示在 `tools/offline_demo.py`，入库在 `tools/ingest.py`；修改提示词、模型或配置后应重启应用。日志可能包含路径或上下文，分享错误时先脱敏。
